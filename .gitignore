@@ -1,0 +1,10 @@
+```text
+# Ignorar archivos temporales y dependencias (si en el futuro añades node)
+.DS_Store
+node_modules/
+.env
+*.log
+
+# Ignorar archivos de configuración de editores locales
+.vscode/
+.idea/
