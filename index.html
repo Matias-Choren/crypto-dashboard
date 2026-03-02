@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Market Intelligence Dashboard + Gemini AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 800px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 350px; 
+            max-height: 400px; 
+        } 
+        .sheet-table th {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+        .sheet-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+        .tab-active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .ai-shimmer {
+            background: linear-gradient(90deg, #f0f9ff 25%, #e0f2fe 50%, #f0f9ff 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Header Section -->
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">CryptoAnálisis & Sentimientos ✨</h1>
+                <p class="text-slate-500">Analista Senior de Mercados - Potenciado por Gemini 2.5</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center gap-4">
+                <button onclick="generateGlobalReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-indigo-100">
+                    ✨ Generar Reporte Global IA
+                </button>
+                <div class="text-center border-l pl-4 border-slate-200">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Fear & Greed</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-3xl font-black text-amber-500">74</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- AI Global Modal -->
+        <div id="ai-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+                <div class="p-6 border-b flex justify-between items-center bg-indigo-50">
+                    <h3 class="font-bold text-indigo-900 flex items-center gap-2 text-lg">
+                        <span>✨ Intelligence Insight</span>
+                    </h3>
+                    <button onclick="closeAiModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+                </div>
+                <div id="ai-content" class="p-8 overflow-y-auto prose prose-slate text-slate-700 leading-relaxed">
+                    <!-- AI response here -->
+                </div>
+                <div class="p-4 bg-slate-50 border-t flex justify-end">
+                    <button onclick="closeAiModal()" class="px-6 py-2 bg-indigo-600 text-white border rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors">Entendido</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights / Divergences -->
+        <section class="mb-10">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="p-1.5 bg-blue-100 text-blue-600 rounded">💡</span> 
+                Análisis de Divergencias (IA vs Mercado)
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="divergence-container">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            
+            <!-- Sentiment Chart -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="font-bold mb-1">Sentimiento IA (Últimos 500 Tweets)</h3>
+                        <p class="text-xs text-slate-400">Basado en lenguaje natural: Capitulación vs Avaricia.</p>
+                    </div>
+                    <button onclick="analyzeSentimentTrends()" class="text-[10px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md font-bold text-slate-600 flex items-center gap-1 transition-colors">
+                        ✨ Analizar Tendencia
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- News Scanner -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[480px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold">Noticias de Impacto (2h)</h3>
+                    <div class="flex bg-slate-100 p-1 rounded-lg text-[10px] font-bold">
+                        <button onclick="updateNewsFilter('valid')" id="btn-valid" class="px-3 py-1 bg-white rounded shadow-sm">VERIFICADAS</button>
+                        <button onclick="updateNewsFilter('spam')" id="btn-spam" class="px-3 py-1 text-slate-400 transition-colors">SPAM / RUMOR</button>
+                    </div>
+                </div>
+                <div id="news-list" class="flex-grow overflow-y-auto space-y-3 pr-2">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Live_Data Table (Google Sheets Format) -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-10">
+            <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-700">Hoja de Trabajo: Live_Data</h3>
+                <div class="flex items-center gap-4">
+                     <button onclick="aiAnalyzeSheet()" class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 font-bold hover:bg-indigo-100 flex items-center gap-2 transition-colors">
+                        ✨ Analizar Datos de la Hoja
+                    </button>
+                    <div class="text-xs text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Sincronizado
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full sheet-table" id="live-data-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Moneda</th>
+                            <th>Precio_Actual</th>
+                            <th>Sentimiento_IA</th>
+                            <th>Fuente_Principal</th>
+                            <th>Alerta_Volumen (24h vs 7d)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="live-data-body">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // La clave se inyecta automáticamente en el entorno de ejecución o puedes colocar la tuya aquí.
+        const apiKey = ""; 
+        
+        // Función segura y compatible (sin optional chaining '?.' para evitar errores de sintaxis)
+        async function callGemini(prompt, systemInstruction) {
+            if (!systemInstruction) {
+                systemInstruction = "Eres un analista senior de criptomonedas.";
+            }
+            const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + apiKey;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    
+                    // Comprobación de existencia de propiedades completamente segura (ES5 compatible)
+                    if (data && 
+                        data.candidates && 
+                        data.candidates && 
+                        data.candidates.content && 
+                        data.candidates.content.parts && 
+                        data.candidates.content.parts && 
+                        data.candidates.content.parts.text) {
+                        return data.candidates.content.parts.text;
+                    }
+                    throw new Error("Respuesta inválida de la API");
+                } catch (error) {
+                    if (i === 4) throw error;
+                    await new Promise(function(resolve) { setTimeout(resolve, Math.pow(2, i) * 1000); });
+                }
+            }
+        }
+
+        // ESTADO GLOBAL DE LA INVESTIGACIÓN
+        const appData = {
+            timestamp: new Date().toLocaleString(),
+            assets: [
+                {
+                    symbol: "BTC",
+                    price: "63,142.20",
+                    sentiment: "Indiferencia",
+                    scores: { capitulacion: 10, avaricia: 30, indiferencia: 60 },
+                    source: "CoinDesk / Whale Accounts",
+                    vol24h: 45.2,
+                    vol7dAvg: 40.1,
+                    insight: "BTC muestra indiferencia a pesar de la avaricia global. Mercado en espera de confirmación institucional."
+                },
+                {
+                    symbol: "ETH",
+                    price: "3,412.55",
+                    sentiment: "Capitulación",
+                    scores: { capitulacion: 70, avaricia: 10, indiferencia: 20 },
+                    source: "The Block",
+                    vol24h: 22.8,
+                    vol7dAvg: 15.2,
+                    insight: "Miedo extremo en ETH por incertidumbre regulatoria. Divergencia masiva respecto al índice global."
+                },
+                {
+                    symbol: "SOL",
+                    price: "148.90",
+                    sentiment: "Avaricia",
+                    scores: { capitulacion: 5, avaricia: 85, indiferencia: 10 },
+                    source: "X Whale Accounts",
+                    vol24h: 8.4,
+                    vol7dAvg: 7.9,
+                    insight: "Solana alineada con la avaricia global. Flujo constante de liquidez minorista."
+                }
+            ],
+            news: [
+                { title: "Whale Alert: 10,000 BTC movidos de cold wallet a Binance.", impact: 9, category: "Liquidez", source: "Whale Alert", type: "valid" },
+                { title: "Rumores de aprobación de ETF de ETH se intensifican.", impact: 8, category: "Regulación", source: "The Block", type: "valid" },
+                { title: "SEC inicia investigación sobre protocolo DeFi líder.", impact: 10, category: "Regulación", source: "CoinDesk", type: "valid" },
+                { title: "Inversor anónimo dice que Bitcoin llegará a 1M mañana.", impact: 0, category: "Especulación", source: "X Rumor", type: "spam" },
+                { title: "COMPRA $MOON AHORA MISMO EXPLOTA 🚀🚀🚀🚀🚀🔥🔥🔥", impact: 0, category: "Spam", source: "X Bot", type: "spam" }
+            ]
+        };
+
+        // --- FUNCIONES IA GEMINI ---
+
+        async function generateGlobalReport() {
+            showAiModal("<div class='ai-shimmer h-32 rounded-lg'></div><p class='mt-4 text-center text-indigo-600 font-bold animate-pulse'>Gemini está analizando el mercado macro...</p>");
+            
+            // Map manual para no romper nada
+            const assetInfo = appData.assets.map(function(a) { return {s: a.symbol, p: a.price, sent: a.sentiment}; });
+            const validNews = appData.news.filter(function(n) { return n.type === 'valid'; });
+            
+            const prompt = "Analiza el estado actual del mercado basado en estos datos:\n" +
+            "Activos: " + JSON.stringify(assetInfo) + "\n" +
+            "Noticias recientes: " + JSON.stringify(validNews) + "\n" +
+            "Índice de Miedo/Avaricia Global: 74 (Avaricia).\n\n" +
+            "Proporciona un resumen ejecutivo de 3 párrafos sobre los riesgos inmediatos y oportunidades.";
+
+            try {
+                const report = await callGemini(prompt);
+                showAiModal("<h3>Resumen Ejecutivo Global ✨</h3>" + formatTextToHtml(report));
+            } catch (e) {
+                showAiModal("<p class='text-red-500 font-bold'>Error al conectar con el analista IA. Por favor, reintenta.</p>");
+            }
+        }
+
+        async function analyzeDivergenceIA(symbol) {
+            const asset = appData.assets.find(function(a) { return a.symbol === symbol; });
+            showAiModal("<div class='ai-shimmer h-20 rounded-lg'></div><p class='mt-4 text-indigo-600 font-bold'>Analizando divergencia profunda para " + symbol + "...</p>");
+            
+            const prompt = "El activo " + symbol + " tiene un precio de $" + asset.price + " y un sentimiento social de '" + asset.sentiment + "'. " +
+            "El mercado global está en 'Avaricia' (74/100).\n" +
+            "Explica por qué ocurre esta divergencia y qué debería vigilar un trader profesional. Sé conciso y técnico.";
+
+            try {
+                const analysis = await callGemini(prompt);
+                showAiModal("<h3>Análisis Profundo: " + symbol + " ✨</h3>" + formatTextToHtml(analysis));
+            } catch (e) {
+                showAiModal("<p class='text-red-500 font-bold'>Error en el análisis de divergencia.</p>");
+            }
+        }
+
+        async function aiAnalyzeSheet() {
+            showAiModal("<div class='ai-shimmer h-40 rounded-lg'></div><p class='mt-4 text-indigo-600 font-bold'>Extrayendo anomalías de la hoja de datos...</p>");
+            const prompt = "Analiza esta tabla de datos: " + JSON.stringify(appData.assets) + "\n" +
+            "Busca anomalías de volumen o precio que no coincidan con el sentimiento. Genera una lista de 3 'Alertas Propias'.";
+            
+            try {
+                const result = await callGemini(prompt);
+                showAiModal("<h3>Hallazgos en Live_Data ✨</h3>" + formatTextToHtml(result));
+            } catch (e) {
+                showAiModal("<p class='text-red-500 font-bold'>Error al procesar la hoja de datos.</p>");
+            }
+        }
+
+        async function analyzeSentimentTrends() {
+            showAiModal("<div class='ai-shimmer h-20 rounded-lg'></div><p class='mt-4 text-indigo-600 font-bold'>Prediciendo tendencia basada en sentimiento social...</p>");
+            
+            const prompt = "Basado en estas puntuaciones de sentimiento:\n" + 
+            "BTC: " + JSON.stringify(appData.assets.scores) + ",\n" +
+            "ETH: " + JSON.stringify(appData.assets.scores) + ",\n" +
+            "SOL: " + JSON.stringify(appData.assets.scores) + "\n" +
+            "Predice cuál de los tres activos tiene mayor probabilidad de un 'short squeeze' o una corrección violenta en las próximas 12 horas.";
+
+            try {
+                const prediction = await callGemini(prompt);
+                showAiModal("<h3>Predicción de Tendencia ✨</h3>" + formatTextToHtml(prediction));
+            } catch (e) {
+                showAiModal("<p class='text-red-500 font-bold'>Error al predecir tendencia.</p>");
+            }
+        }
+
+        // --- UTILS UI ---
+
+        function showAiModal(content) {
+            const modal = document.getElementById('ai-modal');
+            const container = document.getElementById('ai-content');
+            container.innerHTML = content;
+            modal.classList.remove('hidden');
+        }
+
+        function closeAiModal() {
+            document.getElementById('ai-modal').classList.add('hidden');
+        }
+
+        function formatTextToHtml(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        }
+
+        // RENDERIZAR DIVERGENCIAS
+        function renderDivergences() {
+            const container = document.getElementById('divergence-container');
+            container.innerHTML = appData.assets.map(function(asset) {
+                const isDivergent = (asset.sentiment === "Capitulación" && 74 > 50);
+                const borderClass = isDivergent ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200';
+                const badgeClass = asset.sentiment === 'Capitulación' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-500';
+                
+                return "<div class='p-4 rounded-lg border " + borderClass + " transition-all hover:shadow-md'>" +
+                            "<div class='flex justify-between items-center mb-2'>" +
+                                "<span class='font-bold text-slate-700'>$" + asset.symbol + "</span>" +
+                                "<span class='text-[10px] font-bold px-2 py-0.5 rounded-full " + badgeClass + "'>" + asset.sentiment + "</span>" +
+                            "</div>" +
+                            "<p class='text-xs text-slate-600 leading-tight mb-3'>" + asset.insight + "</p>" +
+                            "<button onclick=\"analyzeDivergenceIA('" + asset.symbol + "')\" class='w-full text-[10px] bg-white border border-slate-200 py-1.5 rounded font-bold text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-colors uppercase tracking-wide'>" +
+                                "✨ Profundizar con IA" +
+                            "</button>" +
+                        "</div>";
+            }).join('');
+        }
+
+        // RENDERIZAR NOTICIAS
+        function updateNewsFilter(filterType) {
+            const container = document.getElementById('news-list');
+            const btnValid = document.getElementById('btn-valid');
+            const btnSpam = document.getElementById('btn-spam');
+
+            if (filterType === 'valid') {
+                btnValid.className = "px-3 py-1 bg-white rounded shadow-sm";
+                btnSpam.className = "px-3 py-1 text-slate-400";
+            } else {
+                btnSpam.className = "px-3 py-1 bg-white rounded shadow-sm";
+                btnValid.className = "px-3 py-1 text-slate-400";
+            }
+
+            container.innerHTML = appData.news
+                .filter(function(n) { return n.type === filterType; })
+                .map(function(n) {
+                    const bgClass = n.type === 'spam' ? 'border-slate-300 opacity-60' : 'border-blue-500 bg-slate-50';
+                    const titleClass = n.type === 'spam' ? 'italic line-through' : '';
+                    const impactBadge = n.impact > 0 ? "<span class='text-[10px] bg-blue-600 text-white px-1.5 rounded font-bold'>IMP: " + n.impact + "</span>" : "";
+                    
+                    return "<div class='p-3 border-l-4 " + bgClass + " rounded-r-lg mb-2'>" +
+                                "<div class='flex justify-between items-start mb-1'>" +
+                                    "<span class='text-[10px] font-bold text-slate-400 uppercase'>" + n.source + " | " + n.category + "</span>" +
+                                    impactBadge +
+                                "</div>" +
+                                "<p class='text-sm font-medium " + titleClass + "'>" + n.title + "</p>" +
+                            "</div>";
+                }).join('');
+        }
+
+        // RENDERIZAR TABLA LIVE_DATA
+        function renderTable() {
+            const body = document.getElementById('live-data-body');
+            body.innerHTML = appData.assets.map(function(asset) {
+                const volIncrease = ((asset.vol24h - asset.vol7dAvg) / asset.vol7dAvg) * 100;
+                const isAlert = volIncrease > 20;
+                
+                const trClass = isAlert ? "bg-rose-50" : "";
+                const sentimentBadge = asset.sentiment === "Capitulación" ? "text-rose-600 bg-rose-100" : "text-blue-600 bg-blue-50";
+                const alertTextClass = isAlert ? "bg-rose-500 text-white font-bold px-2 py-0.5 rounded" : "text-slate-500";
+                const alertSymbol = isAlert ? "🚨 ALERTA: " : "";
+
+                return "<tr class='" + trClass + "'>" +
+                            "<td class='font-mono text-[10px] text-slate-400'>" + appData.timestamp + "</td>" +
+                            "<td class='font-bold text-slate-800'>$" + asset.symbol + "</td>" +
+                            "<td class='font-mono font-medium text-indigo-700'>$" + asset.price + "</td>" +
+                            "<td><span class='px-2 py-0.5 rounded text-[11px] font-bold " + sentimentBadge + "'>" + asset.sentiment + "</span></td>" +
+                            "<td class='text-xs text-slate-500'>" + asset.source + "</td>" +
+                            "<td><div class='flex items-center gap-2'><span class='" + alertTextClass + "'>" + alertSymbol + volIncrease.toFixed(1) + "%</span></div></td>" +
+                        "</tr>";
+            }).join('');
+        }
+
+        // GRÁFICO (Sin encadenamiento opcional para total compatibilidad)
+        let sentimentChart;
+        function initChart() {
+            const ctx = document.getElementById('sentimentChart');
+            if (!ctx) return;
+
+            const datasets = appData.assets.map(function(asset, index) {
+                const colors = ['rgba(245, 158, 11, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)'];
+                
+                // Acceso seguro ES5 a los datos de scores
+                const cap = (asset.scores && typeof asset.scores.capitulacion !== 'undefined') ? asset.scores.capitulacion : 0;
+                const ava = (asset.scores && typeof asset.scores.avaricia !== 'undefined') ? asset.scores.avaricia : 0;
+                const ind = (asset.scores && typeof asset.scores.indiferencia !== 'undefined') ? asset.scores.indiferencia : 0;
+
+                return {
+                    label: asset.symbol,
+                    data: [cap, ava, ind],
+                    backgroundColor: colors[index % colors.length],
+                    borderRadius: 4
+                };
+            });
+
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+            
+            sentimentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Capitulación', 'Avaricia', 'Indiferencia'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100, 
+                            ticks: { 
+                                callback: function(value) { return value + '%'; } 
+                            } 
+                        } 
+                    },
+                    plugins: { 
+                        legend: { position: 'bottom' } 
+                    }
+                }
+            });
+        }
+
+        // INICIALIZACIÓN COMPLETA DE LA APP
+        window.addEventListener('load', function() {
+            renderDivergences();
+            updateNewsFilter('valid');
+            renderTable();
+            initChart();
+        });
+    </script>
+</body>
+</html>
